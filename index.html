@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#100e18">
+<title>Norse Deep Translator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#100e18;color:#eee7ff;font-family:Arial,"Noto Sans TC",sans-serif;padding:22px}
+main{max-width:720px;margin:auto}
+h1{text-align:center;color:#c6a8ff;font-size:clamp(25px,6vw,38px)}
+.sub{text-align:center;color:#b7a9cb;line-height:1.7}
+.rune{text-align:center;color:#9875d1;font-size:27px;letter-spacing:8px;margin:18px}
+.panel{background:#1b1726;border:1px solid #49385f;border-radius:16px;padding:18px;margin:18px 0}
+label{display:block;margin-bottom:10px;color:#d8c8f3;font-weight:bold}
+select,textarea{width:100%;background:#100e18;color:#f7f2ff;border:1px solid #604b7d;border-radius:10px;padding:13px;font-size:16px}
+textarea{min-height:140px;resize:vertical;line-height:1.7}
+button{border:1px solid #8064a9;background:#38294d;color:#fff;border-radius:10px;padding:12px 15px;font-size:15px;cursor:pointer}
+button:active{background:#63468a}
+.buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}
+#result{white-space:pre-wrap;overflow-wrap:anywhere;min-height:100px;line-height:1.8;font-size:21px;color:#f0e5ff}
+.note{font-size:13px;color:#b7a9cb;line-height:1.7}
+.status{font-size:14px;color:#d7c5f2;line-height:1.7}
+footer{text-align:center;color:#81738f;font-size:12px;margin:25px 0}
+</style>
+</head>
+<body>
+<main>
+  <div class="rune">ᚠ ᚢ ᚦ ᚨ ᚱ</div>
+  <h1>Norse Deep Translator</h1>
+  <p class="sub">北歐古語・深淵翻譯器<br>English ↔ Old Norse</p>
+
+  <section class="panel">
+    <label for="direction">翻譯方向</label>
+    <select id="direction">
+      <option value="en">English → Old Norse（英文翻古諾斯語）</option>
+      <option value="on">Old Norse → English（古諾斯語翻英文）</option>
+    </select>
+  </section>
+
+  <section class="panel">
+    <label id="inputLabel" for="input">輸入英文</label>
+    <textarea id="input" placeholder="例如：I love you"></textarea>
+    <div class="buttons">
+      <button id="translate">開始翻譯</button>
+      <button id="swap">⇄ 切換方向</button>
+      <button id="clear">清空</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <label>翻譯結果</label>
+    <div id="result" aria-live="polite">結果會顯示在這裡……</div>
+    <div class="buttons">
+      <button id="copy">複製結果</button>
+    </div>
+    <p class="status" id="status">目前使用內建詞彙與句型資料。</p>
+  </section>
+
+  <section class="panel">
+    <label>試試看</label>
+    <p class="note">英文範例：I love you / the sun / the moon</p>
+    <p class="note">古諾斯語範例：ek elska þik / sól / máni</p>
+    <button id="example">填入範例</button>
+  </section>
+
+  <p class="note">
+    注意：古諾斯語是歷史語言。本工具使用有限的內建詞彙和句型，
+    不是完整翻譯引擎。詞形、格位、語序及歷史拼寫可能需要專家核對。
+    未收錄的內容會提示查無資料，不會假裝翻譯成功。
+  </p>
+  <footer>ᚱ ᚢ ᚾ ᛖ · NORSE DEEP</footer>
+</main>
+
+<script>
+const phrases = {
+  en: {
+    "i love you": "Ek elska þik",
+    "the sun": "Sólin",
+    "the moon": "Máni",
+    "good morning": "Góðan morgin",
+    "thank you": "Þökk",
+    "i": "Ek",
+    "you": "Þú",
+    "he": "Hann",
+    "she": "Hon",
+    "we": "Vér",
+    "they": "Þeir",
+    "sun": "Sól",
+    "moon": "Máni",
+    "star": "Stjarna",
+    "stars": "Stjörnur",
+    "night": "Nótt",
+    "day": "Dagur",
+    "fire": "Eldr",
+    "water": "Vatn",
+    "earth": "Jörð",
+    "sea": "Haf",
+    "sky": "Himinn",
+    "house": "Hús",
+    "man": "Maðr",
+    "woman": "Kona",
+    "child": "Barn",
+    "friend": "Vinr",
+    "wolf": "Ulfr",
+    "raven": "Hrafn",
+    "dragon": "Dreki",
+    "sword": "Sverð",
+    "shield": "Skjöldr",
+    "king": "Konungr",
+    "queen": "Dróttning",
+    "god": "Goð",
+    "gods": "Goð",
+    "love": "Elska",
+    "life": "Líf",
+    "death": "Dauði",
+    "dream": "Draumr",
+    "dreams": "Draumar",
+    "dark": "Dökkr",
+    "light": "Ljós",
+    "good": "Góðr",
+    "bad": "Illr",
+    "yes": "Já",
+    "no": "Nei"
+  },
+  on: {
+    "ek elska þik": "I love you",
+    "sólin": "the sun",
+    "sól": "sun",
+    "máni": "moon",
+    "góðan morgin": "good morning",
+    "þökk": "thanks",
+    "ek": "I",
+    "þú": "you",
+    "hann": "he",
+    "hon": "she",
+    "vér": "we",
+    "þeir": "they",
+    "stjarna": "star",
+    "stjörnur": "stars",
+    "nótt": "night",
+    "dagur": "day",
+    "dagr": "day",
+    "eldr": "fire",
+    "vatn": "water",
+    "jörð": "earth",
+    "haf": "sea",
+    "himinn": "sky",
+    "hús": "house",
+    "maðr": "man",
+    "kona": "woman",
+    "barn": "child",
+    "vinr": "friend",
+    "ulfr": "wolf",
+    "hrafn": "raven",
+    "dreki": "dragon",
+    "sverð": "sword",
+    "skjöldr": "shield",
+    "konungr": "king",
+    "dróttning": "queen",
+    "goð": "god / gods",
+    "elska": "love",
+    "líf": "life",
+    "dauði": "death",
+    "draumr": "dream",
+    "draumar": "dreams",
+    "dökkr": "dark",
+    "ljós": "light",
+    "góðr": "good",
+    "illr": "bad",
+    "já": "yes",
+    "nei": "no"
+  }
+};
+
+const input = document.getElementById("input");
+const result = document.getElementById("result");
+const status = document.getElementById("status");
+const direction = document.getElementById("direction");
+
+function normalize(s) {
+  return s.toLocaleLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function translate() {
+  const text = input.value.trim();
+  if (!text) {
+    result.textContent = "請先輸入文字。";
+    status.textContent = "尚未翻譯。";
+    return;
+  }
+
+  const dict = phrases[direction.value];
+  const key = normalize(text);
+
+  if (dict[key]) {
+    result.textContent = dict[key];
+    status.textContent = "找到內建詞條或句型。請注意古代語法與拼寫仍建議核對。";
+    return;
+  }
+
+  const tokens = text.match(/[A-Za-zÀ-ÖØ-öø-ÿÞþÐðÆæǪǫ]+|[^A-Za-zÀ-ÖØ-öø-ÿÞþÐðÆæǪǫ]+/g) || [text];
+  let found = 0;
+  let missing = [];
+
+  const converted = tokens.map(token => {
+    const k = normalize(token);
+    if (!/[A-Za-zÀ-ÖØ-öø-ÿÞþÐðÆæǪǫ]/.test(token)) return token;
+    if (dict[k]) {
+      found++;
+      return dict[k];
+    }
+    missing.push(token);
+    return "[" + token + "?]";
+  });
+
+  result.textContent = converted.join("");
+  if (missing.length) {
+    status.textContent = "部分內容未收錄：" + [...new Set(missing)].join(", ") +
+      "。以 [文字?] 標示的部分尚未翻譯，不能視為正確古諾斯語。";
+  } else if (found) {
+    status.textContent = "已轉換收錄詞條；逐字轉換不保證句法正確。";
+  } else {
+    status.textContent = "查無對應資料，請嘗試較短的單字或已收錄句型。";
+  }
+}
+
+function updateLabels() {
+  const en = direction.value === "en";
+  document.getElementById("inputLabel").textContent =
+    en ? "輸入英文" : "輸入古諾斯語";
+  input.placeholder = en
+    ? "例如：I love you"
+    : "例如：Ek elska þik";
+  result.textContent = "結果會顯示在這裡……";
+  status.textContent = "目前使用內建詞彙與句型資料。";
+}
+
+document.getElementById("translate").addEventListener("click", translate);
+direction.addEventListener("change", updateLabels);
+document.getElementById("swap").addEventListener("click", () => {
+  direction.value = direction.value === "en" ? "on" : "en";
+  updateLabels();
+});
+document.getElementById("clear").addEventListener("click", () => {
+  input.value = "";
+  result.textContent = "結果會顯示在這裡……";
+  status.textContent = "已清空。";
+});
+document.getElementById("example").addEventListener("click", () => {
+  input.value = direction.value === "en" ? "I love you" : "Ek elska þik";
+  translate();
+});
+document.getElementById("copy").addEventListener("click", async () => {
+  const text = result.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    status.textContent = "已複製結果。";
+  } catch (e) {
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    document.body.appendChild(temp);
+    temp.select();
+    const ok = document.execCommand("copy");
+    temp.remove();
+    status.textContent = ok ? "已複製結果。" : "複製失敗，請手動選取結果複製。";
+  }
+});
+</script>
+</body>
+</html>
